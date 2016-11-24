@@ -17,14 +17,14 @@ public class Main extends ApplicationAdapter {
   private MyShaderProgram program;
   private Mesh mesh;
 
-  public String path = "";
+  public String fragmentShaderPath = "shader.frag";
 
   private final Pattern versionPattern = Pattern.compile("#version ...", Pattern.CASE_INSENSITIVE);
 
   @Override
   public void create () {
     vertexShader = Gdx.files.internal("shader.vert").readString();
-    fragmentShader = Gdx.files.absolute(path + "shader.frag").readString();
+    fragmentShader = Gdx.files.absolute(fragmentShaderPath).readString();
     mesh = new Mesh(true, 4, 6, new VertexAttribute(VertexAttributes.Usage.Position, 2, "aVertexPosition"));
     mesh.setVertices(new float[]
         {

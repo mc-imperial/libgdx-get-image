@@ -15,7 +15,6 @@ public class AndroidLauncher extends AndroidApplication {
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 		int res = ContextCompat.checkSelfPermission(this.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
 		if(res != PackageManager.PERMISSION_GRANTED) {
 			ActivityCompat.requestPermissions(
@@ -23,8 +22,16 @@ public class AndroidLauncher extends AndroidApplication {
 					new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
 					0);
 		}
+		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
+		config.disableAudio = true;
+		config.useWakelock = true;
+		config.useCompass = false;
+		config.useAccelerometer = false;
+		config.useImmersiveMode = true;
+//		config.hideStatusBar = true;
+		config.useGL30 = true;
 		Main main = new Main();
-		main.path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/";
+		main.fragmentShaderPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/shader.frag";
 		initialize(main, config);
 	}
 }

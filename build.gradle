@@ -42,6 +42,7 @@ project(":desktop") {
         compile project(":core")
         compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compile "net.sourceforge.argparse4j:argparse4j:0.7.0"
     }
 }
 
