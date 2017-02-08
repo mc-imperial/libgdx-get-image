@@ -2,11 +2,17 @@ package uk.ac.ic.doc.multicore.oglfuzzer.libgdx.getimage;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
 
+import com.badlogic.gdx.utils.ScreenUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +24,9 @@ public class Main extends ApplicationAdapter {
   private Mesh mesh;
 
   public String fragmentShaderPath = "shader.frag";
+
+  public String outputPngPath = null;
+  public int pngCaptureDelay = 3;
 
   private final Pattern versionPattern = Pattern.compile("#version ...", Pattern.CASE_INSENSITIVE);
 
@@ -49,11 +58,11 @@ public class Main extends ApplicationAdapter {
     program = new MyShaderProgram(matcher.group() + "\n" + vertexShader, fragmentShader);
 
     if(program.fragmentOrVertexFailedToCompile()) {
-      throw new PrepareShaderException("COMPILE_ERROR\n" + program.getLog());
+      throw new PrepareShaderException("COMPILE_ERROR\n" + program.getLog(), true, false);
     }
 
     if(program.failedToLink()) {
-      throw new PrepareShaderException("LINK_ERROR\n" + program.getLog());
+      throw new PrepareShaderException("LINK_ERROR\n" + program.getLog(), false, true);
     }
 
     if(!program.isCompiled()) {
@@ -68,7 +77,7 @@ public class Main extends ApplicationAdapter {
   @Override
   public void render () {
 
-    Gdx.gl.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+    Gdx.gl.glViewport(0, 0, getWidth(), getHeight());
     checkForGlError();
 
     Gdx.gl.glClearColor(0, 0, 0, 0);
@@ -103,7 +112,7 @@ public class Main extends ApplicationAdapter {
     }
     checkForGlError();
 
-    mesh.render(program, Gdx.gl.GL_TRIANGLES);
+    mesh.render(program, GL20.GL_TRIANGLES);
     checkForGlError();
 
     program.end();
@@ -114,6 +123,21 @@ public class Main extends ApplicationAdapter {
 
     Gdx.gl.glFinish();
     checkForGlError();
+
+    if(outputPngPath != null) {
+      if(pngCaptureDelay == 0) {
+        try {
+          FileHandle file = Gdx.files.absolute(outputPngPath);
+          ByteArrayOutputStream stream = getPNG();
+          stream.writeTo(file.write(false));
+          Gdx.app.exit();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      --pngCaptureDelay;
+    }
+
   }
 
   @Override
@@ -127,6 +151,45 @@ public class Main extends ApplicationAdapter {
     if(error != GL20.GL_NO_ERROR) {
       throw new GlErrorException(error);
     }
+  }
+
+  private int getWidth() {
+    return Gdx.graphics.getBackBufferWidth();
+  }
+
+  private int getHeight() {
+    return Gdx.graphics.getBackBufferHeight();
+  }
+
+  private ByteArrayOutputStream getPNG() throws GetPNGException, IOException {
+    Gdx.app.log("Main","getPNG enter");
+
+    ByteArrayOutputStream inMemoryStream = new ByteArrayOutputStream(getWidth() * getHeight() * 4);
+    PixmapIO.PNG pngWriter = new PixmapIO.PNG((int)(getWidth() * getHeight() * 1.5f));
+
+    Pixmap pixmap = null;
+
+    try {
+      Gdx.app.log("Main","getPNG getFrameBufferPixmap");
+      pixmap = ScreenUtils.getFrameBufferPixmap(0, 0, getWidth(), getHeight());
+
+      checkForGlError();
+
+      Gdx.app.log("Main","getPNG writing pixmap to inMemoryStream");
+      pngWriter.write(inMemoryStream, pixmap);
+
+      checkForGlError();
+
+    }
+    catch (GlErrorException e) {
+      throw new GetPNGException(e);
+    }
+    finally {
+      if(pixmap != null) pixmap.dispose();
+    }
+    Gdx.app.log("Main","getPNG exit");
+
+    return inMemoryStream;
   }
 
 }
