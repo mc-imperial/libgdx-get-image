@@ -3,14 +3,20 @@
 Takes a GLSL fragment shader as input, renders the shader on a flat rectangle, 
 and outputs a PNG file of the rendered image (or just displays the image).
 
+The quickest way to see how our clients should render a fragment shader
+is to look at the JavaScript code in our WebGL client:
+https://github.com/mc-imperial/shader-compiler-bugs/blob/master/utils/webgl/webgl_viewer.html#L59
+
+Otherwise, continue reading for an overview.
+
 The vec2 array of vertices:
 
 ```
 {
-    -1.0f, 1.0f,
+    -1.0f,  1.0f,
     -1.0f, -1.0f,
-    1.0f, -1.0f,
-    1.0f, 1.0f,
+     1.0f, -1.0f,
+     1.0f,  1.0f,
 
 }
 ```
@@ -46,7 +52,7 @@ The rendering code sets the values of the following uniforms, if they are presen
 * resolution: (width, height) [of the display, as floats]
 * injectionSwitch (0.0f, 1.0f)
 
-The location of the uniforms is checked and the value is set on every frame,
+The location of the uniforms is checked and the values are set on every frame,
 which is unnecessary.
 
 The rectangle is rendered using `glDrawElements` and `GL_TRIANGLES`.
@@ -56,7 +62,9 @@ Finally:
 * glFlush()
 * glFinish()
 
-The contents of the frame is then captured (after rendering a few times initially).
+We also call glError() after every GL call and throw an exception if an error occurred.
+
+The contents of the frame is then captured and saved to a PNG (after rendering 3 times initially).
 
 The rendering code can be see in [Main.java](core/src/uk/ac/ic/doc/multicore/oglfuzzer/libgdx/getimage/Main.java#L78).
 
@@ -65,8 +73,6 @@ A more precise, low-level version of the code is available in our WebGL client:
 https://github.com/mc-imperial/shader-compiler-bugs/blob/master/utils/webgl/webgl_viewer.html#L59
 
 In the WebGL version, the uniforms are only set once.
-
-
 
 
 ## Desktop usage:
