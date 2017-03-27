@@ -1,5 +1,74 @@
 # libgdx-get-image
 
+Takes a GLSL fragment shader as input, renders the shader on a flat rectangle, 
+and outputs a PNG file of the rendered image (or just displays the image).
+
+The vec2 array of vertices:
+
+```
+{
+    -1.0f, 1.0f,
+    -1.0f, -1.0f,
+    1.0f, -1.0f,
+    1.0f, 1.0f,
+
+}
+```
+
+The indices: `{0, 1, 2, 2, 3, 0}`.
+
+The vertex shader is:
+
+```
+#version X
+attribute vec3 aVertexPosition;
+
+void main(void) {
+    gl_Position = vec4(aVertexPosition, 1.0);
+}
+```
+
+where X is replaced with the version of the fragment shader.
+I believe the vertex shader will need to be adapted when we start testing
+newer versions of GLSL; we have so far only tested: 100, 440.
+
+
+The rendering code does the following:
+
+* Set the viewport.
+* glClearColor(0, 0, 0, 0);
+* glClear(GL_COLOR_BUFFER_BIT);
+
+The rendering code sets the values of the following uniforms, if they are present:
+
+* time: 0.0f
+* mouse: (0.0f, 0.0f)
+* resolution: (width, height) [of the display, as floats]
+* injectionSwitch (0.0f, 1.0f)
+
+The location of the uniforms is checked and the value is set on every frame,
+which is unnecessary.
+
+The rectangle is rendered using `glDrawElements` and `GL_TRIANGLES`.
+
+Finally: 
+
+* glFlush()
+* glFinish()
+
+The contents of the frame is then captured (after rendering a few times initially).
+
+The rendering code can be see in [Main.java](core/src/uk/ac/ic/doc/multicore/oglfuzzer/libgdx/getimage/Main.java#L78).
+
+Some of the rendering code may be unclear as we use LibGDX.
+A more precise, low-level version of the code is available in our WebGL client:
+https://github.com/mc-imperial/shader-compiler-bugs/blob/master/utils/webgl/webgl_viewer.html#L59
+
+In the WebGL version, the uniforms are only set once.
+
+
+
+
 ## Desktop usage:
 
 ```bash
@@ -36,7 +105,8 @@ Thus, they are currently:
 
 * 101 for fragment shader compile error.
 * 102 for fragment shader link error.
-* 1 for everything else.
+* 1 for all other failures.
+* 0 for success.
 
 Check [DesktopLauncher.java](desktop/src/uk/ac/ic/doc/multicore/oglfuzzer/libgdx/getimage/desktop/DesktopLauncher.java)
 for up-to-date exit codes.
